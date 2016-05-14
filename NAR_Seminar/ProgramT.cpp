@@ -64,13 +64,10 @@ void MultiplyByVector(long* ResultVector, int** theArray, int* Vector, int M, in
 void VerticalMultiplyByVector(long* ResultVector, int** theArray, int* Vector, int M, int N, int length, int offset){
 	int limit = 0 + offset + length;
 	limit = (limit > N) ? N : limit;
-
 	long temp = 0;
-
-	
-	for(int i = 0 + offset; i < limit; i++){
-		for(int j = 0; j< N; j++){
-			temp += theArray[j][i] * Vector[j];
+	for(int i = 0; i< M; i++){
+		for(int j = 0 + offset; j < limit; j++){
+			temp += theArray[i][j] * Vector[j];
 		}
 		ResultVector[i] += temp;
 		temp = 0;
@@ -132,7 +129,7 @@ int main(int argc, char* argv[])
 
 	Initiate(Array, Vector, ResultVector, M, N);
 	t1 = tmr.elapsed();
-	VerticalMultiplyByVector(ResultVector, Array, Vector, M, N, M, 0);
+	VerticalMultiplyByVector(ResultVector, Array, Vector, M, N, N, 0);
 	t2 = tmr.elapsed();
 	cout << "Mnozenje matrice s vektorom - vertikalno - sekvencijalno (vrijeme): " << (t2-t1) << endl;
 	cout << "Par rezultata mnozenja: " << ResultVector[1] << ", " << ResultVector[2] << endl;
