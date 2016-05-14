@@ -61,7 +61,33 @@ void MultiplyByVector(long* ResultVector, int** theArray, int* Vector, int M, in
 	}
 }
 
-// (A*x=b)
+void VerticalMultiplyByVector(long* ResultVector, int** theArray, int* Vector, int M, int N, int length, int offset){
+	int limit = 0 + offset + length;
+	limit = (limit > N) ? N : limit;
+	long temp = 0;
+	for(int i = 0; i< M; i++){
+		for(int j = 0 + offset; j < limit; j++){
+			temp += theArray[i][j] * Vector[j];
+		}
+		ResultVector[i] += temp;
+		temp = 0;
+	}
+}
+
+void DumbVerticalMultiplyByVector(long* ResultVector, int** theArray, int* Vector, int M, int N, int length, int offset){
+	int limit = 0 + offset + length;
+	limit = (limit > N) ? N : limit;
+	long temp = 0;
+
+	for(int j = 0 + offset; j < limit; j++){
+		int quick = Vector[j];
+		for(int i = 0; i< M; i++){
+			temp += theArray[i][j] * quick;
+			ResultVector[i] += temp;
+			temp = 0;
+		}
+	}
+}
 
 int main(int argc, char* argv[])
 {
@@ -113,5 +139,55 @@ int main(int argc, char* argv[])
 	t2 = tmr.elapsed();
 	cout << "Mnozenje matrice s vektorom - paralelno (vrijeme): " << (t2-t1) << endl;
 	cout << "Par rezultata mnozenja: " << ResultVector[1] << ", " << ResultVector[2] << endl;
-	
+
+// Mnozenje matrice s vektorom - vertikalno - sekvencijalno
+
+	Initiate(Array, Vector, ResultVector, M, N);
+	t1 = tmr.elapsed();
+	VerticalMultiplyByVector(ResultVector, Array, Vector, M, N, N, 0);
+	t2 = tmr.elapsed();
+	cout << "Mnozenje matrice s vektorom - vertikalno - sekvencijalno (vrijeme): " << (t2-t1) << endl;
+	cout << "Par rezultata mnozenja: " << ResultVector[1] << ", " << ResultVector[2] << endl;
+
+// Mnozenje matrice s vektorom - vertikalno - paralelno
+
+	Initiate(Array, Vector, ResultVector, M, N);
+	length = N / Threads;
+	t1 = tmr.elapsed();
+	for( int z = 0; z < Threads; z++){
+		offset = z * length;
+		p[z] = std::thread(VerticalMultiplyByVector, ResultVector, Array, Vector, M, N, length, offset);
+	}
+	for( int z = 0; z < Threads; z++){
+		p[z].join();
+	}
+	t2 = tmr.elapsed();
+	cout << "Mnozenje matrice s vektorom - vertikalno - paralelno (vrijeme): " << (t2-t1) << endl;
+	cout << "Par rezultata mnozenja: " << ResultVector[1] << ", " << ResultVector[2] << endl;
+
+// Mnozenje matrice s vektorom - vertikalno - sekvencijalno - glupo
+
+	Initiate(Array, Vector, ResultVector, M, N);
+	t1 = tmr.elapsed();
+	DumbVerticalMultiplyByVector(ResultVector, Array, Vector, M, N, N, 0);
+	t2 = tmr.elapsed();
+	cout << "Mnozenje matrice s vektorom - vertikalno - sekvencijalno - glupo (vrijeme): " << (t2-t1) << endl;
+	cout << "Par rezultata mnozenja: " << ResultVector[1] << ", " << ResultVector[2] << endl;
+
+// Mnozenje matrice s vektorom - vertikalno - paralelno
+
+	Initiate(Array, Vector, ResultVector, M, N);
+	length = N / Threads;
+	t1 = tmr.elapsed();
+	for( int z = 0; z < Threads; z++){
+		offset = z * length;
+		p[z] = std::thread(DumbVerticalMultiplyByVector, ResultVector, Array, Vector, M, N, length, offset);
+	}
+	for( int z = 0; z < Threads; z++){
+		p[z].join();
+	}
+	t2 = tmr.elapsed();
+	cout << "Mnozenje matrice s vektorom - vertikalno - paralelno - glupo (vrijeme): " << (t2-t1) << endl;
+	cout << "Par rezultata mnozenja: " << ResultVector[1] << ", " << ResultVector[2] << endl;
+
 }
