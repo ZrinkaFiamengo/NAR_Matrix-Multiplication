@@ -39,21 +39,24 @@ int main()
 	double timer_start, timer_end;
 	Timer tmr;
 
+	A = MakeMatrix(M, N);
+	x = MakeVector(N);
+	b = MakeVector(M);
+	AT = MakeMatrix(N, M);
+
 	srand(time(NULL));
 
 #pragma region Inicijalizacije podataka
 	cout << "Inicijalizacija matrica:" << endl;
 	timer_start = tmr.elapsed();
 
-	A = MakeMatrix(M, N);
-	initRandomNumbers(10, A);
-	x = MakeVector(N);
+	initRandomNumbers(M, N, 10, A);
 	initRandomNumbers(N, 10, x);
 
 	if (PRINTING_ENABLED)
 	{
 		cout << "Matrica A:" << endl;
-		printMatrix(A);
+		printMatrix(M, N, A);
 		cout << "Vektor x:" << endl;
 		printVector(N, x);
 	}
@@ -67,9 +70,8 @@ int main()
 	cout << "Sekvencijalno mnozenje Ax=b po redcima matrice A:" << endl;
 	timer_start = tmr.elapsed();
 
-	b = MakeVector(M);
 	initZero(M, b);
-	multiplyByRows(0, M, A, x, b);
+	multiplyByRows(0, M, N, A, x, b);
 
 	if (PRINTING_ENABLED)
 	{
@@ -102,9 +104,9 @@ int main()
 			unsigned int i = 0;
 			for (i=0; i < broj_niti[nit] - 1; i++)
 			{
-				threads[i] = thread(multiplyByRows, i *segment_size, i*segment_size + segment_size, A, x, b);
+				threads[i] = thread(multiplyByRows, i *segment_size, i*segment_size + segment_size, N, A, x, b);
 			}
-			threads[i] = thread(multiplyByRows, i *segment_size, M, A, x, b);
+			threads[i] = thread(multiplyByRows, i *segment_size, M, N, A, x, b);
 
 			for (int i = 0; i < broj_niti[nit]; i++)
 			{
@@ -127,13 +129,12 @@ int main()
 
 #pragma region Sekvencijalno mnozenje Ax=b po stupcima matrice A
 	cout << "Sekvencijalno mnozenje Ax=b po stupcima matrice A:" << endl;
-	AT = MakeMatrix(N, M);
-	transposeMatrix(A, AT);
+	transposeMatrix(M, N, A, AT);
 
 	timer_start = tmr.elapsed();
 
 	initZero(M, b);
-	multiplyByColumns(0, N, AT, x, b);
+	multiplyByColumnsTransposed(0, N, M, AT, x, b);
 
 	if (PRINTING_ENABLED)
 	{
@@ -168,10 +169,10 @@ int main()
 			for (; i < broj_niti[nit] - 1; i++)
 			{
 				initZero(M, result[i]);
-				threads[i] = thread(multiplyByColumns, i *segment_size, i*segment_size + segment_size, AT, x, result[i]);
+				threads[i] = thread(multiplyByColumnsTransposed, i *segment_size, i*segment_size + segment_size, M, AT, x, result[i]);
 			}
 			initZero(M, result[i]);
-			threads[i] = thread(multiplyByColumns, i *segment_size, N, AT, x, result[i]);
+			threads[i] = thread(multiplyByColumnsTransposed, i *segment_size, N, M, AT, x, result[i]);
 
 			for (i = 0; i < broj_niti[nit]; i++)
 			{

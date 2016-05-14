@@ -10,8 +10,8 @@
 //PROGRAM PARAMETERS!
 
 //Matrix sizes: A[M][N], x[N], b[M] (A*x=b)
-#define N 5000
-#define M 2000
+#define N 10000
+#define M 10000
 #define MAX_NUMBER_OF_THREADS 20	//everything above this is ignored
 #define PRINTING_ENABLED false //set true for displaying data
 
@@ -31,11 +31,11 @@ int** MakeMatrix(int sizeX, int sizeY)
 	return A;
 }
 
-void printMatrix(int **A)
+void printMatrix(int sizeX, int sizeY, int **A)
 {
-	for (int i = 0; i < M; i++)
+	for (int i = 0; i < sizeX; i++)
 	{
-		for (int j = 0; j < N; j++)
+		for (int j = 0; j < sizeY; j++)
 		{
 			std::cout << A[i][j] << "\t";
 		}
@@ -67,22 +67,22 @@ void initRandomNumbers(int size, int range, int *vec)
 	}
 }
 
-void initRandomNumbers(int range, int **A)
+void initRandomNumbers(int sizeX, int sizeY, int range, int **A)
 {
-	for (int i = 0; i < M; i++)
+	for (int i = 0; i < sizeX; i++)
 	{
-		for (int j = 0; j < N; j++)
+		for (int j = 0; j < sizeY; j++)
 		{
 			A[i][j] = rand() % range;
 		}
 	}
 }
 
-void transposeMatrix(int **A, int **AT)
+void transposeMatrix(int sizeX, int sizeY, int **A, int **AT)
 {
-	for (int i = 0; i < M; i++)
+	for (int i = 0; i < sizeX; i++)
 	{
-		for (int j = 0; j < N; j++)
+		for (int j = 0; j < sizeY; j++)
 		{
 			AT[j][i] = A[i][j];
 		}
@@ -105,24 +105,33 @@ void addVectorToVector(int size, int *vec1, int *vec2)
 	}
 }
 
-void multiplyByRows(int start, int end, int **A, int *x, int *b)
+void multiplyByRows(int start, int end, int sizeY, int **A, int *x, int *b)
 {
 	for (int i = start; i < end; i++)
 	{
-		for (int j = 0; j < N; j++)
+		for (int j = 0; j < sizeY; j++)
 		{
 			b[i] += A[i][j] * x[j];
 		}
 	}
 }
 
-
-void multiplyByColumns(int start, int end, int **AT, int *x, int *b)
+void multiplyByColumns(int start, int end,int sizeX, int **AT, int *x, int *b)
 {
-	int temp_result[M];
+	int *temp_result = MakeVector(sizeX);
 	for (int i = start; i < end; i++)
 	{
-		multiplyVectorWithConstant(M, AT[i], x[i], temp_result);
-		addVectorToVector(M, b, temp_result);
+		multiplyVectorWithConstant(sizeX, AT[i], x[i], temp_result);
+		addVectorToVector(sizeX, b, temp_result);
+	}
+}
+
+void multiplyByColumnsTransposed(int start, int end, int sizeX, int **AT, int *x, int *b)
+{
+	int *temp_result = MakeVector(sizeX);
+	for (int i = start; i < end; i++)
+	{
+		multiplyVectorWithConstant(sizeX, AT[i], x[i], temp_result);
+		addVectorToVector(sizeX, b, temp_result);
 	}
 }
