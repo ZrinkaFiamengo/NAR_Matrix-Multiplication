@@ -31,14 +31,99 @@ private:
 };
 
 
+vector<short> broj_niti = { 2, 4, 8, 16, M, N};
+short **A, *x, *b;	//A*x=b
+short **AT; //A transposed
+double timer_start, timer_end;
+Timer tmr;
+
+
+void Sequential(string poruka, void(*fun)(short par1, short par2, short par3, short par4, short** par5, short* par6, short *par7), short par2, short** par5)
+{
+	cout << poruka << endl;
+	timer_start = tmr.elapsed();
+
+	initZero(M, b);
+	(*fun)(0, par2, M, N, par5, x, b);
+
+	if (PRINTING_ENABLED)
+	{
+		cout << "Vektor b:" << endl;
+		printVector(M, b);
+	}
+
+	timer_end = tmr.elapsed();
+	std::cout << "->proteklo vrijeme: " << timer_end - timer_start << endl;
+	std::cout << endl << "--------------------------------------------" << endl << endl;
+}
+
+
+void Parallel(string poruka, void(*fun)(short par1, short par2, short par3, short par4, short** par5, short* par6, short *par7), short par22, short** par5, int par7)
+{
+	cout << poruka << endl;
+	std::cout << endl << "******************" << endl;
+
+	for (unsigned short nit = 0; nit < broj_niti.size(); nit++)
+	{
+		if (broj_niti[nit] <= MAX_NUMBER_OF_THREADS)
+		{
+			thread threads[MAX_NUMBER_OF_THREADS];
+			short result[MAX_NUMBER_OF_THREADS][M];
+			short segment_size = 0;
+
+			if (par7 == 1)
+			segment_size = M / broj_niti[nit];
+			else if (par7 == 2)
+			segment_size = N / broj_niti[nit];
+
+			cout << "Broj niti: " << broj_niti[nit] << endl;
+
+			timer_start = tmr.elapsed();
+
+			initZero(M, b);
+
+			unsigned short i = 0;
+			for (i = 0; i < broj_niti[nit] - 1; i++)
+			{
+				initZero(M, result[i]);
+				if(par7 == 1)
+					threads[i] = thread((*fun), i *segment_size, i*segment_size + segment_size, M, N, par5, x, b);
+				else if(par7 == 2)
+					threads[i] = thread((*fun), i *segment_size, i*segment_size + segment_size, M, N, par5, x, result[i]);
+			}
+			initZero(M, result[i]);
+			if (par7 == 1)
+				threads[i] = thread((*fun), i *segment_size, par22, M, N, par5, x, b);
+			else if (par7 == 2)
+				threads[i] = thread((*fun), i *segment_size, par22, M, N, par5, x, result[i]);
+
+			for (short i = 0; i < broj_niti[nit]; i++)
+			{
+				threads[i].join();
+			}
+
+			for (short i = 0; i < broj_niti[nit]; i++)
+			{
+				addVectorToVector(M, b, result[i]);
+			}
+
+			if (PRINTING_ENABLED)
+			{
+				cout << "Vektor b:" << endl;
+				printVector(M, b);
+			}
+
+			timer_end = tmr.elapsed();
+			std::cout << "->proteklo vrijeme: " << timer_end - timer_start << endl;
+			std::cout << "******************" << endl;
+		}
+	}
+	std::cout << endl << "--------------------------------------------" << endl << endl;
+}
+
+
 short main()
 {
-	vector<short> broj_niti = { 2, 4,8, M, N};
-	short **A, *x, *b;	//A*x=b
-	short **AT; //A transposed
-	double timer_start, timer_end;
-	Timer tmr;
-
 	A = MakeMatrix(M, N);
 	x = MakeVector(N);
 	b = MakeVector(M);
@@ -53,7 +138,7 @@ short main()
 	initRandomNumbers(M, N, 10, A);
 	initRandomNumbers(N, 10, x);
 
-	if (printING_ENABLED)
+	if (PRINTING_ENABLED)
 	{
 		cout << "Matrica A:" << endl;
 		printMatrix(M, N, A);
@@ -66,274 +151,16 @@ short main()
 	std::cout << endl << "--------------------------------------------" << endl<<endl;
 #pragma endregion
 
-#pragma region Sekvencijalno mnozenje Ax=b po redcima matrice A
-	cout << "Sekvencijalno mnozenje Ax=b po redcima matrice A:" << endl;
-	timer_start = tmr.elapsed();
+Sequential("Sekvencijalno mnozenje Ax=b po redcima matrice A:", &multiplyByRows, M, A);
+Parallel("Paralelno mnozenje Ax=b po redcima matrice A:", multiplyByRows, M, A, 1);
 
-	initZero(M, b);
-	multiplyByRows(0, M, N, A, x, b);
+Sequential("Sekvencijalno mnozenje Ax=b po stupcima matrice A:", multiplyByColumns, N, A);
+Parallel("Paralelno mnozenje Ax=b po stupcima matrice A:", multiplyByColumns, N, A, 2);
 
-	if (printING_ENABLED)
-	{
-		cout << "Vektor b:" << endl;
-		printVector(M, b);
-	}
+Sequential("Sekvencijalno mnozenje Ax=b po redcima matrice A (podjeljene po stupcima):", multiplyByRowsDivideByCollumns, N, A);
+Parallel("Paralelno mnozenje Ax=b po stupcima matrice A:", multiplyByRowsDivideByCollumns, N, A, 2);
 
-	timer_end = tmr.elapsed();
-	std::cout << "->proteklo vrijeme: " << timer_end - timer_start << endl;
-	std::cout << endl << "--------------------------------------------" << endl << endl;
-#pragma endregion
-
-#pragma region Paralelno mnozenje Ax=b po redcima matrice A
-	cout << "Paralelno mnozenje Ax=b po redcima matrice A:" << endl;
-	std::cout <<endl << "******************" << endl;
-
-	for (unsigned short nit = 0; nit < broj_niti.size(); nit++)
-	{
-		if (broj_niti[nit] <= MAX_NUMBER_OF_THREADS)
-		{
-			thread threads[MAX_NUMBER_OF_THREADS];
-			short segment_size = M / broj_niti[nit];
-			
-			cout << "Broj niti: " << broj_niti[nit] << endl;
-
-			timer_start = tmr.elapsed();
-
-			initZero(M, b);
-
-			unsigned short i = 0;
-			for (i=0; i < broj_niti[nit] - 1; i++)
-			{
-				threads[i] = thread(multiplyByRows, i *segment_size, i*segment_size + segment_size, N, A, x, b);
-			}
-			threads[i] = thread(multiplyByRows, i *segment_size, M, N, A, x, b);
-
-			for (short i = 0; i < broj_niti[nit]; i++)
-			{
-				threads[i].join();
-			}
-
-			if (printING_ENABLED)
-			{
-				cout << "Vektor b:" << endl;
-				printVector(M, b);
-			}
-
-			timer_end = tmr.elapsed();
-			std::cout << "->proteklo vrijeme: " << timer_end - timer_start << endl;
-			std::cout << "******************" << endl;
-		}
-	}
-	std::cout << endl << "--------------------------------------------" << endl << endl;
-#pragma endregion
-
-#pragma region Sekvencijalno mnozenje Ax=b po stupcima matrice A
-	cout << "Sekvencijalno mnozenje Ax=b po stupcima matrice A:" << endl;
-
-	timer_start = tmr.elapsed();
-
-	initZero(M, b);
-	multiplyByColumns(0, N, M, A, x, b);
-
-	if (printING_ENABLED)
-	{
-		cout << "Vektor b:" << endl;
-		printVector(M, b);
-	}
-
-	timer_end = tmr.elapsed();
-	std::cout << "->proteklo vrijeme: " << timer_end - timer_start << endl;
-	std::cout << endl << "--------------------------------------------" << endl << endl;
-#pragma endregion
-
-#pragma region Paralelno mnozenje Ax=b po stupcima matrice A
-	cout << "Paralelno mnozenje Ax=b po stupcima matrice A:" << endl;
-	std::cout << endl << "******************" << endl;
-
-	for (unsigned short nit = 0; nit < broj_niti.size(); nit++)
-	{
-		if (broj_niti[nit] <= MAX_NUMBER_OF_THREADS)
-		{
-			thread threads[MAX_NUMBER_OF_THREADS];
-			short result[MAX_NUMBER_OF_THREADS][M];
-			short segment_size = N / broj_niti[nit];
-
-			cout << "Broj niti: " << broj_niti[nit] << endl;
-
-			timer_start = tmr.elapsed();
-
-			initZero(M, b);
-
-			unsigned short i = 0;
-			for (; i < broj_niti[nit] - 1; i++)
-			{
-				initZero(M, result[i]);
-				threads[i] = thread(multiplyByColumns, i *segment_size, i*segment_size + segment_size, M, A, x, result[i]);
-			}
-			initZero(M, result[i]);
-			threads[i] = thread(multiplyByColumns, i *segment_size, N, M, A, x, result[i]);
-
-			for (i = 0; i < broj_niti[nit]; i++)
-			{
-				threads[i].join();
-			}
-
-			for (short i = 0; i < broj_niti[nit]; i++)
-			{
-				addVectorToVector(M, b, result[i]);
-			}
-
-			if (printING_ENABLED)
-			{
-				cout << "Vektor b:" << endl;
-				printVector(M, b);
-			}
-
-			timer_end = tmr.elapsed();
-			std::cout << "->proteklo vrijeme: " << timer_end - timer_start << endl;
-			std::cout << "******************" << endl;
-		}
-	}
-	std::cout << endl << "--------------------------------------------" << endl << endl;
-#pragma endregion
-
-#pragma region Sekvencijalno mnozenje Ax=b po redcima matrice A (podjeljene po stupcima)
-	cout << "Sekvencijalno mnozenje Ax=b po redcima matrice A (podjeljene po stupcima):" << endl;
-
-	timer_start = tmr.elapsed();
-
-	initZero(M, b);
-	multiplyByRowsDivideByCollumns(0, N, M, A, x, b);
-
-	if (printING_ENABLED)
-	{
-		cout << "Vektor b:" << endl;
-		printVector(M, b);
-	}
-
-	timer_end = tmr.elapsed();
-	std::cout << "->proteklo vrijeme: " << timer_end - timer_start << endl;
-	std::cout << endl << "--------------------------------------------" << endl << endl;
-#pragma endregion
-
-#pragma region Paralelno mnozenje Ax=b po redcima matrice A (podjeljene po stupcima)
-	cout << "Paralelno mnozenje Ax=b po redcima matrice A (podjeljene po stupcima):" << endl;
-	std::cout << endl << "******************" << endl;
-
-	for (unsigned short nit = 0; nit < broj_niti.size(); nit++)
-	{
-		if (broj_niti[nit] <= MAX_NUMBER_OF_THREADS)
-		{
-			thread threads[MAX_NUMBER_OF_THREADS];
-			short result[MAX_NUMBER_OF_THREADS][M];
-			short segment_size = N / broj_niti[nit];
-
-			cout << "Broj niti: " << broj_niti[nit] << endl;
-
-			timer_start = tmr.elapsed();
-
-			initZero(M, b);
-
-			unsigned short i = 0;
-			for (; i < broj_niti[nit] - 1; i++)
-			{
-				initZero(M, result[i]);
-				threads[i] = thread(multiplyByRowsDivideByCollumns, i *segment_size, i*segment_size + segment_size, M, A, x, result[i]);
-			}
-			initZero(M, result[i]);
-			threads[i] = thread(multiplyByRowsDivideByCollumns, i *segment_size, N, M, A, x, result[i]);
-
-			for (i = 0; i < broj_niti[nit]; i++)
-			{
-				threads[i].join();
-			}
-
-			for (short i = 0; i < broj_niti[nit]; i++)
-			{
-				addVectorToVector(M, b, result[i]);
-			}
-
-			if (printING_ENABLED)
-			{
-				cout << "Vektor b:" << endl;
-				printVector(M, b);
-			}
-
-			timer_end = tmr.elapsed();
-			std::cout << "->proteklo vrijeme: " << timer_end - timer_start << endl;
-			std::cout << "******************" << endl;
-		}
-	}
-	std::cout << endl << "--------------------------------------------" << endl << endl;
-#pragma endregion
-
-#pragma region Sekvencijalno mnozenje Ax=b po stupcima matrice A (s transponiranjem)
-	cout << "Sekvencijalno mnozenje Ax=b po stupcima matrice A(s transponiranjem):" << endl;
-	transposeMatrix(M, N, A, AT);
-
-	timer_start = tmr.elapsed();
-
-	initZero(M, b);
-	multiplyByColumnsTransposed(0, N, M, AT, x, b);
-
-	if (printING_ENABLED)
-	{
-		cout << "Vektor b:" << endl;
-		printVector(M, b);
-	}
-
-	timer_end = tmr.elapsed();
-	std::cout << "->proteklo vrijeme: " << timer_end - timer_start << endl;
-	std::cout << endl << "--------------------------------------------" << endl << endl;
-#pragma endregion
-
-#pragma region Paralelno mnozenje Ax=b po stupcima matrice A (s transponiranjem)
-	cout << "Paralelno mnozenje Ax=b po stupcima matrice A (s transponiranjem):" << endl;
-	std::cout <<endl << "******************" << endl;
-
-	for (unsigned short nit = 0; nit < broj_niti.size(); nit++)
-	{
-		if (broj_niti[nit] <= MAX_NUMBER_OF_THREADS)
-		{
-			thread threads[MAX_NUMBER_OF_THREADS];
-			short result[MAX_NUMBER_OF_THREADS][M];
-			short segment_size = N / broj_niti[nit];
-
-			cout << "Broj niti: " << broj_niti[nit] << endl;
-
-			timer_start = tmr.elapsed();
-
-			initZero(M, b);
-
-			unsigned short i = 0;
-			for (; i < broj_niti[nit] - 1; i++)
-			{
-				initZero(M, result[i]);
-				threads[i] = thread(multiplyByColumnsTransposed, i *segment_size, i*segment_size + segment_size, M, AT, x, result[i]);
-			}
-			initZero(M, result[i]);
-			threads[i] = thread(multiplyByColumnsTransposed, i *segment_size, N, M, AT, x, result[i]);
-
-			for (i = 0; i < broj_niti[nit]; i++)
-			{
-				threads[i].join();
-			}
-
-			for (short i = 0; i < broj_niti[nit]; i++)
-			{
-				addVectorToVector(M, b, result[i]);
-			}
-
-			if (printING_ENABLED)
-			{
-				cout << "Vektor b:" << endl;
-				printVector(M, b);
-			}
-
-			timer_end = tmr.elapsed();
-			std::cout << "->proteklo vrijeme: " << timer_end - timer_start << endl;
-			std::cout << "******************" << endl;
-		}
-	}
-#pragma endregion
+transposeMatrix(M, N, A, AT);
+Sequential("Sekvencijalno mnozenje Ax=b po stupcima matrice A(s transponiranjem):", multiplyByColumnsTransposed, N, AT);
+Parallel("Paralelno mnozenje Ax=b po stupcima matrice A(s transponiranjem):", multiplyByColumnsTransposed, N, AT, 2);
 }

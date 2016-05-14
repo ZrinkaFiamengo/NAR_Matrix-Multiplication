@@ -11,9 +11,9 @@
 
 //Matrix sizes: A[M][N], x[N], b[M] (A*x=b)
 #define N 10000
-#define M 8000
-#define MAX_NUMBER_OF_THREADS 20	//everything above this is ignored
-#define printING_ENABLED false //set true for displaying data
+#define M 7000
+#define MAX_NUMBER_OF_THREADS 32	//everything above this is ignored
+#define PRINTING_ENABLED false //set true for displaying data
 
 short* MakeVector(short size)
 {
@@ -105,7 +105,7 @@ void addVectorToVector(short size, short *vec1, short *vec2)
 	}
 }
 
-void multiplyByRows(short start, short end, short sizeY, short **A, short *x, short *b)
+void multiplyByRows(short start, short end, short sizeX, short sizeY, short **A, short *x, short *b)
 {
 	for (short i = start; i < end; i++)
 	{
@@ -116,7 +116,7 @@ void multiplyByRows(short start, short end, short sizeY, short **A, short *x, sh
 	}
 }
 
-void multiplyByColumns(short start, short end, short sizeX, short **A, short *x, short *b)
+void multiplyByColumns(short start, short end, short sizeX, short sizeY, short **A, short *x, short *b)
 {
 	for (short i = start; i < end; i++)
 	{
@@ -130,7 +130,7 @@ void multiplyByColumns(short start, short end, short sizeX, short **A, short *x,
 	}
 }
 
-void multiplyByRowsDivideByCollumns(short start, short end, short sizeX, short **A, short *x, short *b)
+void multiplyByRowsDivideByCollumns(short start, short end, short sizeX, short sizeY, short **A, short *x, short *b)
 {
 	for (short i = 0; i < sizeX; i++)
 	{
@@ -143,7 +143,7 @@ void multiplyByRowsDivideByCollumns(short start, short end, short sizeX, short *
 	}
 }
 
-void multiplyByColumnsTransposed(short start, short end, short sizeX, short **AT, short *x, short *b)
+void multiplyByColumnsTransposed(short start, short end, short sizeX, short sizeY, short **AT, short *x, short *b)
 {
 	short *temp_result = MakeVector(sizeX);
 	for (short i = start; i < end; i++)
