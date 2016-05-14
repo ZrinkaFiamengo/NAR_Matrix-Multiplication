@@ -10,13 +10,28 @@
 //PROGRAM PARAMETERS!
 
 //Matrix sizes: A[M][N], x[N], b[M] (A*x=b)
-#define N 500
-#define M 200
+#define N 5000
+#define M 2000
 #define MAX_NUMBER_OF_THREADS 20	//everything above this is ignored
 #define PRINTING_ENABLED false //set true for displaying data
 
+int* MakeVector(int size)
+{
+	int *b;
+	b = (int*)malloc(size * sizeof(int));
+	return b;
+}
 
-void printMatrix(int A[M][N])
+int** MakeMatrix(int sizeX, int sizeY)
+{
+	int **A;
+	A = (int**)malloc(sizeX * sizeof(int*));
+	for (int i = 0; i < sizeX; i++)
+		A[i] = MakeVector(sizeY);
+	return A;
+}
+
+void printMatrix(int **A)
 {
 	for (int i = 0; i < M; i++)
 	{
@@ -52,7 +67,7 @@ void initRandomNumbers(int size, int range, int *vec)
 	}
 }
 
-void initRandomNumbers(int range, int A[M][N])
+void initRandomNumbers(int range, int **A)
 {
 	for (int i = 0; i < M; i++)
 	{
@@ -63,7 +78,7 @@ void initRandomNumbers(int range, int A[M][N])
 	}
 }
 
-void transposeMatrix(int A[M][N], int AT[N][M])
+void transposeMatrix(int **A, int **AT)
 {
 	for (int i = 0; i < M; i++)
 	{
@@ -90,7 +105,7 @@ void addVectorToVector(int size, int *vec1, int *vec2)
 	}
 }
 
-void multiplyByRows(int start, int end, int A[M][N], int *x, int *b)
+void multiplyByRows(int start, int end, int **A, int *x, int *b)
 {
 	for (int i = start; i < end; i++)
 	{
@@ -102,7 +117,7 @@ void multiplyByRows(int start, int end, int A[M][N], int *x, int *b)
 }
 
 
-void multiplyByColumns(int start, int end, int AT[N][M], int *x, int *b)
+void multiplyByColumns(int start, int end, int **AT, int *x, int *b)
 {
 	int temp_result[M];
 	for (int i = start; i < end; i++)

@@ -34,8 +34,8 @@ private:
 int main()
 {
 	vector<int> broj_niti = { 2, 3, 4, M, N };
-	int A[M][N], x[N], b[M];	//A*x=b
-	int AT[N][M]; //A transposed
+	int **A, *x, *b;	//A*x=b
+	int **AT; //A transposed
 	double timer_start, timer_end;
 	Timer tmr;
 
@@ -45,7 +45,9 @@ int main()
 	cout << "Inicijalizacija matrica:" << endl;
 	timer_start = tmr.elapsed();
 
+	A = MakeMatrix(M, N);
 	initRandomNumbers(10, A);
+	x = MakeVector(N);
 	initRandomNumbers(N, 10, x);
 
 	if (PRINTING_ENABLED)
@@ -65,6 +67,7 @@ int main()
 	cout << "Sekvencijalno mnozenje Ax=b po redcima matrice A:" << endl;
 	timer_start = tmr.elapsed();
 
+	b = MakeVector(M);
 	initZero(M, b);
 	multiplyByRows(0, M, A, x, b);
 
@@ -124,6 +127,7 @@ int main()
 
 #pragma region Sekvencijalno mnozenje Ax=b po stupcima matrice A
 	cout << "Sekvencijalno mnozenje Ax=b po stupcima matrice A:" << endl;
+	AT = MakeMatrix(N, M);
 	transposeMatrix(A, AT);
 
 	timer_start = tmr.elapsed();
