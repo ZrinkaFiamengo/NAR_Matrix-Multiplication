@@ -40,7 +40,7 @@ Timer tmr;
 
 void Sequential(string poruka, void(*fun)(short par1, short par2, short par3, short par4, short** par5, short* par6, short *par7), short par2, short** par5)
 {
-	cout << poruka << endl;
+	if (!GRAPH_OUTPUT) cout << poruka << endl;
 	timer_start = tmr.elapsed();
 
 	initZero(M, b);
@@ -53,15 +53,16 @@ void Sequential(string poruka, void(*fun)(short par1, short par2, short par3, sh
 	}
 
 	timer_end = tmr.elapsed();
-	std::cout << "->proteklo vrijeme: " << timer_end - timer_start << endl;
-	std::cout << endl << "--------------------------------------------" << endl << endl;
+	if (!GRAPH_OUTPUT) std::cout << "->proteklo vrijeme: " << timer_end - timer_start << endl;
+	if (GRAPH_OUTPUT) std::cout << timer_end - timer_start << ", ";
+	if (!GRAPH_OUTPUT) std::cout << endl << "--------------------------------------------" << endl << endl;
 }
 
 
 void Parallel(string poruka, void(*fun)(short par1, short par2, short par3, short par4, short** par5, short* par6, short *par7), short par22, short** par5, int par7)
 {
-	cout << poruka << endl;
-	std::cout << endl << "******************" << endl;
+	if (!GRAPH_OUTPUT) cout << poruka << endl;
+	if (!GRAPH_OUTPUT) std::cout << endl << "******************" << endl;
 
 	for (unsigned short nit = 0; nit < broj_niti.size(); nit++)
 	{
@@ -76,7 +77,7 @@ void Parallel(string poruka, void(*fun)(short par1, short par2, short par3, shor
 			else if (par7 == 2)
 			segment_size = N / broj_niti[nit];
 
-			cout << "Broj niti: " << broj_niti[nit] << endl;
+			if (!GRAPH_OUTPUT) cout << "Broj niti: " << broj_niti[nit] << endl;
 
 			timer_start = tmr.elapsed();
 
@@ -114,15 +115,16 @@ void Parallel(string poruka, void(*fun)(short par1, short par2, short par3, shor
 			}
 
 			timer_end = tmr.elapsed();
-			std::cout << "->proteklo vrijeme: " << timer_end - timer_start << endl;
-			std::cout << "******************" << endl;
+			if (!GRAPH_OUTPUT) std::cout << "->proteklo vrijeme: " << timer_end - timer_start << endl;
+			if (GRAPH_OUTPUT) std::cout << timer_end - timer_start << ", ";
+			if (!GRAPH_OUTPUT) std::cout << "******************" << endl;
 		}
 	}
-	std::cout << endl << "--------------------------------------------" << endl << endl;
+	if (!GRAPH_OUTPUT) std::cout << endl << "--------------------------------------------" << endl << endl;
 }
 
 
-short main()
+int main()
 {
 	A = MakeMatrix(M, N);
 	x = MakeVector(N);
@@ -130,9 +132,10 @@ short main()
 	AT = MakeMatrix(N, M);
 
 	srand(time(NULL));
+	if (GRAPH_OUTPUT) std::cout << std::fixed;
 
 #pragma region Inicijalizacije podataka
-	cout << "Inicijalizacija matrica:" << endl;
+	if (!GRAPH_OUTPUT) cout << "Inicijalizacija matrica:" << endl;
 	timer_start = tmr.elapsed();
 
 	initRandomNumbers(M, N, 10, A);
@@ -147,8 +150,9 @@ short main()
 	}
 
 	timer_end = tmr.elapsed();
-	std::cout << "->proteklo vrijeme: " << timer_end - timer_start << endl;
-	std::cout << endl << "--------------------------------------------" << endl<<endl;
+	if (!GRAPH_OUTPUT) std::cout << "->proteklo vrijeme: " << timer_end - timer_start << endl;
+	if (GRAPH_OUTPUT) std::cout << timer_end - timer_start << ", ";
+	if (!GRAPH_OUTPUT) std::cout << endl << "--------------------------------------------" << endl<<endl;
 #pragma endregion
 
 Sequential("Sekvencijalno mnozenje Ax=b po redcima matrice A:", &multiplyByRows, M, A);
@@ -163,4 +167,6 @@ Parallel("Paralelno mnozenje Ax=b po stupcima matrice A:", multiplyByRowsDivideB
 transposeMatrix(M, N, A, AT);
 Sequential("Sekvencijalno mnozenje Ax=b po stupcima matrice A(s transponiranjem):", multiplyByColumnsTransposed, N, AT);
 Parallel("Paralelno mnozenje Ax=b po stupcima matrice A(s transponiranjem):", multiplyByColumnsTransposed, N, AT, 2);
+
+if (GRAPH_OUTPUT) std::cout << "0 \n";
 }

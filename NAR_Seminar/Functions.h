@@ -14,6 +14,7 @@
 #define M 7000
 #define MAX_NUMBER_OF_THREADS 32	//everything above this is ignored
 #define PRINTING_ENABLED false //set true for displaying data
+#define GRAPH_OUTPUT true
 
 short* MakeVector(short size)
 {
