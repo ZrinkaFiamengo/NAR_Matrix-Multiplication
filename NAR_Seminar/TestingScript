@@ -1,0 +1,12 @@
+#!/bin/bash
+
+echo "Initiated testing..."
+
+for i in `seq 1 20`;
+do
+        echo Test number $i
+        ./Program.out >> TestRecords
+        echo "Saved."
+done  
+
+echo "Finished testing..."
